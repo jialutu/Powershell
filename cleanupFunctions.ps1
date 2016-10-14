@@ -1,3 +1,5 @@
+# This function does a cleanup to delete files older than 7 days. It also keeps a weekly backup indicated by $weekOfBackup, which defaults to Friday.
+# It then clears the weekly backups that are older than 30 days.
 function Invoke-WeeklyCleanup
 (
 	[Parameter(Mandatory=$true)]
@@ -53,12 +55,16 @@ function Invoke-WeeklyCleanup
 	}
 }
 
+# This function does a cleanup of files indicated in the $path parameter are older than $days, which is currently defaulted at 7.
 function Invoke-Cleanup (
 	[Parameter(Mandatory=$true)]
-	[string]$path 
+	[string]$path,
+	[Parameter(Mandatory=$false)]
+	[int]$days = 7
 )
 {
-	$limit = (Get-Date).AddDays(-7)
+	$days = -1*$days
+	$limit = (Get-Date).AddDays($days)
 	
 	try {
 		if (Test-Path $path)
