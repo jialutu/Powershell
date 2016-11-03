@@ -82,3 +82,80 @@ function Invoke-Cleanup (
 		throw "File clean up failed"
 	}
 }
+
+function Invoke-Archive
+(
+	[Parameter(Mandatory=$true)]
+	[string]$path,
+	[Parameter(Mandatory=$false)]
+	[int]$days = 30,
+	[Parameter(Mandatory=$false)]
+	[int]$days_arc = 600
+)
+{
+	$days = -1*$days
+	$days_arc = -1*$days_arc
+	$week = (get-date).DayOfWeek
+	$date = get-date -format "yyyy_MM_dd"
+
+	$limit = (Get-Date).AddDays($days)
+	$limit_arc = (Get-Date).AddDays($days_arc)
+	$path_arc = $path + '\archive'
+
+	try {
+		if (Test-Path $path)
+		{
+			if (Test-Path $path_arc)
+			{	
+				Get-ChildItem -Path $path -Force | Where-Object { !$_.PSIsContainer -and $_.CreationTime -lt $limit } | Move-Item -destination $path_arc
+			}
+			else
+			{
+				mkdir $path_arc
+				Get-ChildItem -Path $path -Force | Where-Object { !$_.PSIsContainer -and $_.CreationTime -lt $limit } | Move-Item -destination $path_arc
+			}
+		# Delete files older than the $limit_arc
+		Get-ChildItem -Path $path_arc -Force | Where-Object { !$_.PSIsContainer -and $_.CreationTime -lt $limit_arc } | Remove-Item -Force
+		}
+		else
+		{
+			throw "Path doesn't exist"
+		}
+	}
+	catch [Exception]
+	{
+		throw "File clean up failed"
+	}
+}
+
+function Invoke-Removal
+(
+	[Parameter(Mandatory=$true)]
+	[string]$path,
+	[Parameter(Mandatory=$false)]
+	[string]$exclude,
+	[Parameter(Mandatory=$false)]
+	[int]$days = 30
+)
+{
+	$days = -1*$days
+	$week = (get-date).DayOfWeek
+	$date = get-date -format "yyyy_MM_dd"
+
+	$limit = (Get-Date).AddDays($days)
+
+	try {
+		if (Test-Path $path)
+		{
+			Get-ChildItem -Path $path -Exclude $exclude -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.CreationTime -lt $limit } | Remove-Item -Force
+		}
+		else
+		{
+			throw "Path doesn't exist"
+		}
+	}
+	catch [Exception]
+	{
+		throw "File clean up failed"
+	}
+}
